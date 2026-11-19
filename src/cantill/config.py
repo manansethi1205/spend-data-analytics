@@ -101,10 +101,20 @@ class ClassificationConfig:
     max_output_tokens: int = 512
     timeout_seconds: float = 30
     retries: int = 1
+    zero_label_strategy: str = "hierarchical"
+    shortlist_size: int = 8
+    include_supplier_context: bool = True
+    confidence_mode: str = "blended"
 
     def __post_init__(self):
         if self.mode not in ("local", "openai", "auto"):
             raise ConfigError("classification.mode must be local, openai or auto")
+        if self.zero_label_strategy not in ("flat", "hierarchical", "shortlist"):
+            raise ConfigError("classification.zero_label_strategy must be flat, hierarchical or shortlist")
+        if type(self.shortlist_size) is not int or not 2 <= self.shortlist_size <= 100:
+            raise ConfigError("classification.shortlist_size must be an integer in [2, 100]")
+        if type(self.include_supplier_context) is not bool or self.confidence_mode not in ("raw", "blended"):
+            raise ConfigError("classification supplier context must be boolean and confidence_mode raw or blended")
         if not isinstance(self.model, str) or not self.model.strip():
             raise ConfigError("classification.model must be nonblank")
         for key, minimum, maximum in (("workers", 1, 32), ("max_requests", 0, 1_000_000),

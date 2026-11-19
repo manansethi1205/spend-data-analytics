@@ -24,7 +24,13 @@ zero-label accuracy was 14%, A assisted 39%, and B assisted 84%. These are not
 population or blind-test estimates; see [HOLDOUT.md](./HOLDOUT.md). Confidence is
 uncalibrated and A classification/entity recall remain material quality limits.
 
-The evaluated classifier/indexes remain fixed. A's completed rehearsal covers all
+The zero-label LLM path has since been revised to hierarchical child selection,
+with an optional TF-IDF shortlist, supplier-name context and a review/local-margin
+confidence blend. The 14% result remains the old flat strategy's score; new live
+accuracy is pending under the no-further-spending instruction. See
+[ZERO_LABEL.md](./ZERO_LABEL.md) for offline replay and paired evaluation.
+
+The finalized outputs retain their earlier classifier/index version. A's completed rehearsal covers all
 46,325 included rows with 9,045 cached LLM decisions; all 65,549 output records
 pass independent validation. Recovery took 219.69 seconds and an estimated
 USD 0.08411475 for that retry only. An earlier partial resumed run took 75.7
@@ -34,7 +40,8 @@ B now explicitly opts into [financial fallback](./FINANCIAL_POLICY.md): blank
 amounts use flagged zero placeholders and absent invoice-month FX uses flagged
 nearest supplied months. The eight values are estimates, not recovered amounts
 or historically verified rates. A and new companies remain strict by default.
-The suite passes 549 tests, including fallback, financial-version provenance,
+The suite passes 562 tests, including zero-label branching/budget/evaluation,
+fallback, financial-version provenance,
 safe API diagnostics and the published four-level new-company CLI example.
 The user chose to finalize B without further API spending after credits were
 exhausted. B has 18,054 LLM-classified included rows and 19,856 local fallback rows

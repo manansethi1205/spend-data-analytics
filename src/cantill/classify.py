@@ -51,6 +51,7 @@ class TaxonomyClassifier:
         self.idf = {key: 1 + log((1 + len(paths)) / (1 + count)) for key, count in frequency.items()}
         self.vectors = [self.vector(document) for document in documents]
         self._predict = lru_cache(maxsize=100000)(self._predict)
+        self.rank = lru_cache(maxsize=100000)(self.rank)
 
     def vector(self, document):
         values = {key: value * self.idf[key] for key, value in document.items() if key in self.idf}
@@ -59,6 +60,15 @@ class TaxonomyClassifier:
 
     def predict(self, description="", service_text="", account_description="", material_type=""):
         return self._predict(description, service_text, account_description, material_type)
+
+    def rank(self, description="", service_text="", account_description="", material_type=""):
+        query = Counter()
+        for text, weight in ((description, 1), (service_text, 1), (account_description, .4), (material_type, .15)):
+            query.update({key: value * weight for key, value in features(text).items()})
+        vector = self.vector(query)
+        return tuple(sorted(((path, sum(value * vector.get(key, 0) for key, value in candidate.items()))
+                             for path, candidate in zip(self.paths, self.vectors, strict=True)),
+                            key=lambda item: (-item[1], item[0])))
 
     def _predict(self, description, service_text, account_description, material_type):
         query = Counter()
@@ -76,6 +86,21 @@ class TaxonomyClassifier:
         if flag:
             confidence = 0.0
         return self.paths[first], confidence, flag
+
+
+def blend_confidence(model_confidence, local_margin, needs_review):
+    """Conservative evidence blend, not a fitted probability calibration."""
+    value = .7 * model_confidence + .3 * max(0.0, min(1.0, local_margin))
+    return min(.49, value * .5) if needs_review else min(1.0, max(0.0, value))
+
+
+def decision_confidence(model, row, path, decision, mode):
+    if mode == "raw":
+        return float(decision["confidence"])
+    ranked = model.rank(*(row.get(field, "") for field in ("description", "service_text", "account_description", "material_type")))
+    scores = dict(ranked)
+    margin = scores[path] - max((score for candidate, score in ranked if candidate != path), default=0)
+    return blend_confidence(float(decision["confidence"]), margin, decision["needs_review"])
 
 
 @dataclass
@@ -122,24 +147,29 @@ def classify_company(company: ResolvedCompany, *, options=None, client=None, cac
                        "retrieval_fingerprint": retrieval.fingerprint,
                        "retrieval_training_rows": retrieval.training_rows}
     if options.mode != "local":
-        from cantill.llm import OpenAIClassifier, context_for
-        backend = OpenAIClassifier(model.paths, options,
+        from cantill.llm import OpenAIClassifier, ZeroLabelClassifier, context_for
+        backend_type = OpenAIClassifier if retrieval is not None else ZeroLabelClassifier
+        backend = backend_type(model.paths, options,
                                    company_id=company.matched.eligible.normalized.ingested.config.company_id,
                                    client=client, cache_dir=cache_dir, label_assisted=retrieval is not None,
                                    reference_fingerprint=retrieval.fingerprint if retrieval is not None else "")
         indices = [index for index, row in enumerate(rows) if row["include"]]
-        results = backend.classify_many([retrieval.context(rows[index]) if retrieval is not None else context_for(rows[index])
+        results = backend.classify_many([retrieval.context(rows[index]) if retrieval is not None else context_for(rows[index], include_supplier=options.include_supplier_context)
                                          for index in indices])
         for index, (result, method, flag) in zip(indices, results, strict=True):
             if result is not None:
                 methods[index] = method + ("_retrieval" if retrieval is not None else "")
-                predictions[index] = (backend.paths[result["category_id"]], float(result["confidence"]), "")
+                path = backend.paths[result["category_id"]]
+                confidence = (float(result["confidence"]) if retrieval is not None else
+                              decision_confidence(model, rows[index], path, result, options.confidence_mode))
+                predictions[index] = (path, confidence, "")
                 flags[index] = ("OPENAI_NEEDS_REVIEW",) if result["needs_review"] else ()
             else:
                 flags[index] += (flag,)
         diagnostics = {**(diagnostics or {}), "mode": options.mode, "model": options.model, **dict(backend.stats),
                        "max_requests": options.max_requests, "max_tokens": options.max_tokens,
-                       "confidence_semantics": "OpenAI/cache: model self-report; local/retrieval: evidence margin; none calibrated"}
+                       "zero_label_strategy": options.zero_label_strategy if retrieval is None else None,
+                       "confidence_semantics": "Zero-label: configured raw or review/local-margin heuristic blend; assisted: model self-report; none empirically calibrated"}
     for index in range(4):
         records[f"l{index + 1}"] = [path[index] if index < len(path) else "" for path, _, _ in predictions]
     records["confidence"] = [confidence for _, confidence, _ in predictions]

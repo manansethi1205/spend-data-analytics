@@ -19,7 +19,10 @@ a material limitation. Matching coverage is not measured ground-truth recall.
 Classification has two paths. Without labels, a local word/character TF-IDF
 taxonomy baseline supplies an unattended fallback; an optional OpenAI LLM selects
 a terminal category ID from a strict schema built from the current tree. No
-category names are hard-coded. Known-company retrieval indexes add up to four
+category names are hard-coded. Zero-label LLM inference now selects children
+recursively; optional top-eight TF-IDF shortlist selection uses hierarchy on
+no overlap. Supplier name is supporting context. Confidence blends review and
+local margin heuristically; new live accuracy is pending. Known-company retrieval indexes add up to four
 relevant labelled examples using lexical similarity/scoped material codes, retaining
 conflicting label support. Inference never opens source labels. C and A's
 labels-hidden evaluation omit the index. Confidence is uncalibrated.
@@ -30,7 +33,7 @@ allowances, concurrency, timeouts, retries and authentication stops are bounded;
 failures use visible local fallback. Keys remain in environment variables.
 
 Reserved-group evaluation used one record per group, 100 scorable records per
-company. A zero-label inference preceded label scoring: terminal accuracy **14%**
+company. Historical flat zero-label inference preceded label scoring: terminal accuracy **14%**
 (spend-weighted 9.77%). Retrieval-assisted A scored **39%** (28.25% weighted);
 B scored **84%** (88.31% weighted). A corrected 28 zero-label errors and regressed
 three. These group-balanced diagnostics and B's imperfect seed labels do not

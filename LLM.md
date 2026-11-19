@@ -1,5 +1,10 @@
 # OpenAI classification: steps 11A-11C
 
+The zero-label API path now defaults to hierarchy, with optional shortlist,
+supplier context and a heuristic confidence blend. See [ZERO_LABEL.md](./ZERO_LABEL.md)
+for current behaviour and paired evaluation. Historical flat measurements below
+remain provenance; new live accuracy is pending under the no-spending instruction.
+
 OpenAI is an optional classifier after financial, eligibility, purchase-matching
 and entity processing. Existing A/B configs default to local classification.
 Setting an API key alone never starts paid requests.

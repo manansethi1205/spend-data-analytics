@@ -446,3 +446,14 @@ reserved groups for final evaluation. See [RETRIEVAL.md](./RETRIEVAL.md).
 - [x] Audited 87 project files, created a clean root commit and pushed only `main`; no internal checkpoint refs/history published.
 - [x] Added Git attributes preserving exact final submission CSV bytes across platforms; staged blob hashes match validated outputs.
 - [ ] External submission form and real A2/B2/C outputs remain outside this publication step.
+
+## Zero-label revision
+
+- [x] Runtime-tree immediate-child LLM traversal to terminal depth, including variable-depth/unary branches and strict per-step enums.
+- [x] Optional TF-IDF top-k terminal shortlist with full-path context; zero overlap retains hierarchy.
+- [x] Supplier-name context enabled on zero-label API path, with opaque IDs excluded and untrusted-data instructions preserved.
+- [x] Conservative path confidence plus review/chosen-leaf local margin blend; raw comparison option and Brier/ECE reporting.
+- [x] Multi-level/retry request/token bounds reserved before execution; strategy-specific caches and unchanged local fallback.
+- [x] Four paired A ablations prepared on original IDs; historical flat accuracy reproduced and confidence replay measured without API calls.
+- [x] 562 tests pass; final submission output hashes remain the historical selected artifacts.
+- [ ] New hierarchy/shortlist/supplier live accuracy remains unmeasured under the active no-further-spending instruction; no improvement over 14% is claimed.

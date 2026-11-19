@@ -3,6 +3,10 @@
 An optional `classification` section configures local/OpenAI/auto mode, model,
 concurrency and request/token/retry limits. Defaults remain local; API keys are
 never accepted in company configs. See [LLM.md](../LLM.md) for schema and commands.
+Zero-label API defaults: `zero_label_strategy: hierarchical` (`flat`/`shortlist`
+are alternatives), `shortlist_size: 8` (2–100), `include_supplier_context: true`
+and `confidence_mode: blended` (`raw` is also available). See
+[ZERO_LABEL.md](../ZERO_LABEL.md). Labelled retrieval keeps its separate backend.
 
 `company_A.yaml` and `company_B.yaml` implement the semantic mappings from
 `DATA_PROFILE.md`. All purchase columns in the supplied files are mapped; unmapped

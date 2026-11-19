@@ -889,3 +889,42 @@ both staged outputs now exactly match their validated SHA-256 values. Internal
 agent history remains local. The earlier deadline is obsolete, as the user
 confirmed. Publication makes no additional classification API calls and does not
 submit an external form or produce unavailable blind-test datasets.
+
+## D35: Zero-label hierarchy, shortlist, supplier context and confidence revision
+
+The user requested replacing flat leaf selection and measuring successive
+changes. Zero-label API inference now defaults to immediate-child hierarchy
+selection. Candidate schema IDs are constrained per node, unary steps skip
+unnecessary calls, and variable-depth terminal paths remain valid. An optional
+TF-IDF top-eight shortlist is a separate cheaper strategy; zero overlap falls
+back to hierarchy. Full worst-case path/retry allowances are reserved before
+execution. Invalid/interrupted traversal uses the existing local terminal fallback.
+
+Supplier name is supporting zero-label context and is explicitly treated as
+untrusted data; IDs, amounts and golden keys remain absent from request fields.
+The labelled retrieval backend/context is kept separate. New strategy caches
+cannot silently reuse the earlier flat decisions. Final selected A/B CSVs and
+their provenance are unchanged by this revision.
+
+Zero-label output confidence now blends 0.7 model path confidence and 0.3
+nonnegative chosen-leaf local margin. Review halves and caps the result at 0.49.
+The path model confidence uses the weakest branch and propagates any review
+flag. This is a conservative heuristic, not fitted probability calibration.
+Weights were fixed before reopening gold values for the replay; labels are never
+used by inference.
+
+The original 100 A IDs/contexts and raw source hashes were verified in a new
+immutable private evaluation freeze. Historical cached flat inference reproduces
+14% terminal accuracy and 9.77% spend weighting. Applying only the confidence
+blend to those same decisions reduces Brier from 0.192415 to 0.119296 and fixed
+10-bin ECE from 0.218900 to 0.071916. This does not improve their category accuracy.
+TF-IDF top-eight gold recall is 34%, so shortlist is not presumed equivalent to
+hierarchy or automatically promoted. The reused sample is now regression/
+development evidence, not an untouched test.
+
+New flat/hierarchy/shortlist/supplier ablations and raw/blended scoring are
+prepared with explicit request/token caps, a synthetic preflight and zero-request
+warm reproduction. Live execution was not performed: the earlier no-further-
+spending instruction still applies. New strategy accuracy, spend-weighted lift,
+cost and runtime remain pending. The suite passes 562 tests. See
+[ZERO_LABEL.md](./ZERO_LABEL.md) for configuration, caveats and offline commands.

@@ -11,7 +11,7 @@ A's purchase matching prefers ERP receipts. Normalized PO/line references,
 supplier/text evidence, quantity/amount capacity and complete invoice groups
 identify cross-system overlaps; strict fingerprints detect repeated exports.
 Ambiguous/incomplete matches remain counted and flagged. Supplier/item resolution
-uses scoped IDs, conservative normalized-name/text/unit links and stable opaque
+uses scoped IDs, complete-link character/Jaccard name matching, text/unit links and stable opaque
 keys. Conflicting material-code descriptions cannot bridge different items.
 A supplier pair precision is 100% but recall only 10%; anonymized aliases remain
 a material limitation. Matching coverage is not measured ground-truth recall.

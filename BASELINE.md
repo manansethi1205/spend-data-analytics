@@ -32,6 +32,12 @@ output contract; confidence on excluded rows does not measure exclusion certaint
 
 ## Supplier evidence
 
+The current resolver adds token-set Jaccard >= 0.8 alongside character similarity
+>= 0.94, shared-token candidates and complete-link/numeric guards. Offline A
+tuning showed no recall lift, and B lacks supplier identity labels to validate
+cross-ERP merges. See [SUPPLIER_RESOLUTION.md](./SUPPLIER_RESOLUTION.md). Historical
+baseline measurements below remain applicable to these unchanged A partitions.
+
 - Vendor IDs are scoped by mapped ERP ID, or logical source when ERP is absent.
   Equal IDs in different ERPs are not evidence of a shared supplier.
 - Names use Unicode/accent/case normalization, punctuation and legal-suffix

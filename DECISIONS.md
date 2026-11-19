@@ -928,3 +928,36 @@ warm reproduction. Live execution was not performed: the earlier no-further-
 spending instruction still applies. New strategy accuracy, spend-weighted lift,
 cost and runtime remain pending. The suite passes 562 tests. See
 [ZERO_LABEL.md](./ZERO_LABEL.md) for configuration, caveats and offline commands.
+
+## D36: Supplier Jaccard rule, label-based tuning and B vendor scope
+
+Added legal-suffix-stripped token Jaccard >= 0.8 as an alternative to character
+similarity >= 0.94, requiring equal sorted numeric tokens. Original token
+boundaries are preserved separately from compact supplier keys. Shared-token
+candidate blocks admit reordered names across character prefixes. Complete-link,
+short-name, ambiguity and bounded-candidate guards remain active. Both thresholds
+are validated config options; no supplier-specific lookup enters inference.
+
+The private offline tuner produces every candidate before opening A golden keys,
+compares the exact legacy supplier clustering against six settings, and uses
+existing pairwise/B-cubed metrics. Development selection requires >=99% pair
+precision; full A and a golden-supplier-disjoint audit are reported separately.
+All settings retain 100% supplier precision, 9.99946% recall and 191 predicted
+groups versus 70 golden groups. Defaults remain 0.94/0.8. No recall gain is
+claimed from implementing a rule that does not alter these real-data partitions.
+
+All 203,705,694 missed pairs arise in one golden group spanning 122 raw supplier
+names and 20,891 ERP rows, including lexically unrelated names. This may encode
+parent identity or a missing crosswalk and does not prove label error. Joining
+them solely from golden membership would memorize identities and does not
+establish transferable matching for A2/C. The disjoint audit contains only nine
+suppliers/1,297 rows and already has perfect legacy metrics; it does not validate
+a new recall lift. Full-A tuning results remain development evidence.
+
+B has 3,995 unique nonblank vendor ID strings across eight ERPs; 74 occur in more
+than one ERP. No supplier names or supplier golden-key field exists in its seed
+labels. Vendor-code reuse and category agreement are not a cross-ERP identity
+mapping, so scoping remains unchanged. Item rules were not loosened on name-only
+analogies: their 99.99559% precision/48.07891% recall and selected CSV hashes are
+unchanged. The full suite passes 574 tests. No paid API calls were made. Details
+and reproduction are in [SUPPLIER_RESOLUTION.md](./SUPPLIER_RESOLUTION.md).

@@ -5,10 +5,11 @@ from dataclasses import dataclass
 from hashlib import sha256
 import json
 import re
+import unicodedata
 
 import pandas as pd
 
-from cantill.matching import MatchedCompany, description_key, informative, similarity, supplier_key
+from cantill.matching import LEGAL_WORDS, MatchedCompany, description_key, informative, similarity, supplier_key
 from cantill.rules import clean_text
 
 
@@ -20,6 +21,55 @@ def opaque_key(kind, company, identity):
 def scope(row):
     # A logical source is the namespace when an ERP identifier is unavailable.
     return row["source_system"].strip() or row["source"]
+
+
+def supplier_tokens(value):
+    text = "".join(c for c in unicodedata.normalize("NFKD", value) if not unicodedata.combining(c)).casefold()
+    return tuple(word for word in re.findall(r"[^\W_]+", text) if word not in LEGAL_WORDS)
+
+
+def supplier_name_clusters(names, sequence_threshold=.94, jaccard_threshold=.8):
+    """Bounded shared-token/character candidates; complete-link acceptance."""
+    profiles = {name: tuple(sorted(variants)) for name, variants in names.items()}
+    numbers = {name: {tuple(sorted(re.findall(r"\d+", " ".join(tokens)))) for tokens in variants}
+               for name, variants in profiles.items()}
+    blocks = defaultdict(set)
+    for name, variants in profiles.items():
+        if len(name) < 8 or len(numbers[name]) != 1:
+            continue
+        signature = next(iter(numbers[name]))
+        blocks[("prefix", signature, name[:3])].add(name)
+        for tokens in variants:
+            for token in set(tokens):
+                blocks[("token", signature, token)].add(name)
+    candidates = defaultdict(set)
+    for block in blocks.values():
+        if len(block) <= 200:
+            for name in block:
+                candidates[name].update(block)
+
+    def matches(left, right):
+        if len(left) < 8 or len(right) < 8 or numbers[left] != numbers[right] or len(numbers[left]) != 1:
+            return False
+        if similarity(left, right) >= sequence_threshold:
+            return True
+        return any(len(set(a) & set(b)) / len(set(a) | set(b)) >= jaccard_threshold
+                   for a in profiles[left] for b in profiles[right] if a and b)
+
+    clusters, membership = [], {}
+    for name in sorted(names):
+        possible = {membership[other] for other in candidates[name] if other in membership}
+        # Never let a broad token create an unbounded quadratic comparison.
+        valid = [index for index in sorted(possible) if len(possible) <= 200
+                 and all(matches(name, other) for other in clusters[index])]
+        if len(valid) == 1:
+            index = valid[0]
+            clusters[index].append(name)
+        else:
+            index = len(clusters)
+            clusters.append([name])
+        membership[name] = index
+    return clusters
 
 
 def item_text(row):
@@ -68,7 +118,7 @@ def resolve_entities(company: MatchedCompany) -> ResolvedCompany:
     rows = company.records.to_dict("records")
     company_id = company.eligible.normalized.ingested.config.company_id
     suppliers = Groups()
-    identities, flags, names = {}, {}, set()
+    identities, flags, names = {}, {}, defaultdict(set)
     for row in rows:
         rid = row["record_id"]
         name = supplier_key(row["supplier_name"])
@@ -79,32 +129,16 @@ def resolve_entities(company: MatchedCompany) -> ResolvedCompany:
         suppliers.find(identity)
         flags[rid] = []
         if named:
-            names.add(name)
+            names[name].add(supplier_tokens(row["supplier_name"]))
             suppliers.join(identity, named)
         if not coded and not named:
             flags[rid].append("SUPPLIER_IDENTITY_MISSING")
         identities[rid] = identity
 
-    # Complete-link clusters prevent a sequence of small edits from bridging
-    # increasingly different names. Only bounded, long-name blocks are compared.
-    blocks = defaultdict(list)
-    for name in sorted(names):
-        blocks[name[:3]].append(name)
-    for block in blocks.values():
-        if len(block) > 200:
-            continue
-        clusters = []
-        for name in block:
-            numeric = re.findall(r"\d+", name)
-            candidates = [cluster for cluster in clusters if len(name) >= 8 and all(
-                len(other) >= 8 and numeric == re.findall(r"\d+", other)
-                and similarity(name, other) >= .94 for other in cluster)]
-            if len(candidates) == 1:
-                cluster = candidates[0]
-                suppliers.join(("name", cluster[0]), ("name", name))
-                cluster.append(name)
-            else:
-                clusters.append([name])
+    options = company.eligible.normalized.ingested.config.entity_resolution
+    for cluster in supplier_name_clusters(names, options.supplier_similarity_threshold, options.supplier_jaccard_threshold):
+        for name in cluster[1:]:
+            suppliers.join(("name", cluster[0]), ("name", name))
 
     supplier_keys = {rid: opaque_key("supplier", company_id, suppliers.find(identity))
                      for rid, identity in identities.items()}

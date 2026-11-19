@@ -23,6 +23,10 @@ Live evaluation succeeded. On 100 group-balanced reserved records per arm, A
 zero-label accuracy was 14%, A assisted 39%, and B assisted 84%. These are not
 population or blind-test estimates; see [HOLDOUT.md](./HOLDOUT.md). Confidence is
 uncalibrated and A classification/entity recall remain material quality limits.
+Supplier resolution now also supports token Jaccard matching and reordered-name
+candidate lookup. Six A tuning settings retained 100% pair precision but did not
+improve the measured 10% recall; see [SUPPLIER_RESOLUTION.md](./SUPPLIER_RESOLUTION.md)
+for the golden-group limitation and B cross-ERP scope audit.
 
 The zero-label LLM path has since been revised to hierarchical child selection,
 with an optional TF-IDF shortlist, supplier-name context and a review/local-margin
@@ -40,7 +44,8 @@ B now explicitly opts into [financial fallback](./FINANCIAL_POLICY.md): blank
 amounts use flagged zero placeholders and absent invoice-month FX uses flagged
 nearest supplied months. The eight values are estimates, not recovered amounts
 or historically verified rates. A and new companies remain strict by default.
-The suite passes 562 tests, including zero-label branching/budget/evaluation,
+The suite passes 574 tests, including supplier token/numeric/chain guards,
+zero-label branching/budget/evaluation,
 fallback, financial-version provenance,
 safe API diagnostics and the published four-level new-company CLI example.
 The user chose to finalize B without further API spending after credits were

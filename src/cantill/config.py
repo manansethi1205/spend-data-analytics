@@ -140,6 +140,18 @@ class FinancialFallbackConfig:
 
 
 @dataclass(frozen=True)
+class EntityResolutionConfig:
+    supplier_similarity_threshold: float = .94
+    supplier_jaccard_threshold: float = .8
+
+    def __post_init__(self):
+        for name in self.__dataclass_fields__:
+            value = getattr(self, name)
+            if type(value) not in (int, float) or not math.isfinite(value) or not .5 <= value <= 1:
+                raise ConfigError(f"entity_resolution.{name} must be finite in [0.5, 1]")
+
+
+@dataclass(frozen=True)
 class CompanyConfig:
     company_id: str
     reporting_currency: str
@@ -154,6 +166,7 @@ class CompanyConfig:
     matching: MatchingConfig = MatchingConfig()
     classification: ClassificationConfig = ClassificationConfig()
     financial_fallback: FinancialFallbackConfig = FinancialFallbackConfig()
+    entity_resolution: EntityResolutionConfig = EntityResolutionConfig()
 
 
 def csv_options(value, defaults):
@@ -271,7 +284,7 @@ def load_config(path: Path, data_dir: Path | None = None) -> CompanyConfig:
     except (OSError, UnicodeError, yaml.YAMLError) as exc:
         raise ConfigError("Cannot read config as safe YAML/JSON") from exc
     value = mapping(value, "config", {
-        "schema_version", "company_id", "reporting_currency", "csv", "sources", "taxonomy", "fx", "labels", "eligibility", "matching", "classification", "financial_fallback",
+        "schema_version", "company_id", "reporting_currency", "csv", "sources", "taxonomy", "fx", "labels", "eligibility", "matching", "classification", "financial_fallback", "entity_resolution",
     }, {"schema_version", "company_id", "reporting_currency", "sources", "taxonomy"})
     if type(value["schema_version"]) is not int or value["schema_version"] != 1:
         raise ConfigError("schema_version must be 1")
@@ -360,4 +373,5 @@ def load_config(path: Path, data_dir: Path | None = None) -> CompanyConfig:
         matching_config(value.get("matching", {}), {s.name for s in sources}),
         ClassificationConfig(**mapping(value.get("classification", {}), "classification", ClassificationConfig.__dataclass_fields__)),
         FinancialFallbackConfig(**mapping(value.get("financial_fallback", {}), "financial_fallback", FinancialFallbackConfig.__dataclass_fields__)),
+        EntityResolutionConfig(**mapping(value.get("entity_resolution", {}), "entity_resolution", EntityResolutionConfig.__dataclass_fields__)),
     )

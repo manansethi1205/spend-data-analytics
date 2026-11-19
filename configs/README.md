@@ -41,6 +41,7 @@ is disabled. Diagnostic commands print aggregate counts, not records. The
 | `matching` | Optional repeat-export sources and preferred/secondary source pairs; disabled by default |
 | `classification` | Optional local/OpenAI/auto settings; local by default |
 | `financial_fallback` | Optional missing-amount/FX approximation policies; strict by default, documented in [FINANCIAL_POLICY.md](../FINANCIAL_POLICY.md) |
+| `entity_resolution` | Supplier character/Jaccard thresholds, default 0.94/0.8; finite numbers in [0.5, 1], documented in [SUPPLIER_RESOLUTION.md](../SUPPLIER_RESOLUTION.md) |
 
 Every file specification has `path`, `fields` (semantic name to actual column
 name), and optional `csv` overrides. Sources additionally require `name`,

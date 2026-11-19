@@ -457,3 +457,13 @@ reserved groups for final evaluation. See [RETRIEVAL.md](./RETRIEVAL.md).
 - [x] Four paired A ablations prepared on original IDs; historical flat accuracy reproduced and confidence replay measured without API calls.
 - [x] 562 tests pass; final submission output hashes remain the historical selected artifacts.
 - [ ] New hierarchy/shortlist/supplier live accuracy remains unmeasured under the active no-further-spending instruction; no improvement over 14% is claimed.
+
+## Supplier token matching and scope audit
+
+- [x] Added Jaccard >= 0.8 alongside character >= 0.94 with identical numeric tokens, token-preserving normalization and shared-token candidate blocks.
+- [x] Preserved complete-link, ambiguity, short-name and bounded-candidate guards; exposed validated thresholds in company config.
+- [x] Compared legacy plus six settings using A supplier/item pairwise metrics, with inference before labels and a supplier-disjoint audit.
+- [x] Full A supplier precision remains 100% and recall 9.99946%; no measured recall lift or 40–50% target achievement is claimed.
+- [x] Diagnosed all missed supplier pairs in one golden group spanning 122 raw names/20,891 rows; no arbitrary golden-name lookup introduced.
+- [x] B has 74 vendor IDs reused across eight ERPs, no supplier names and no supplier golden keys; retained ERP scoping pending identity evidence.
+- [x] Item metrics and finalized submission hashes unchanged; 574 tests pass and no API calls made.

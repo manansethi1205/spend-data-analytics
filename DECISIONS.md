@@ -873,3 +873,19 @@ decisions or reference indexes, and their accuracy must not be conflated with
 reserved LLM evaluation. Final selected CSVs remain unchanged. No API requests
 were made, and no publication occurred. There is no configured GitHub remote or
 available GitHub CLI; actual publication remains a separate step.
+
+## D34: Audited public repository publication
+
+The user supplied GitHub owner `manansethi1205` and repository name
+`spend-data-analytics`. Created that public repository with the existing Git
+Credential Manager sign-in; credentials were used only in memory, never printed
+or written to repository files. Source/staging audits excluded task inputs,
+private artifacts, credentials and internal checkpoint refs.
+
+A fresh root commit contains the audited project, synthetic examples and approved
+final A/B outputs. Only `main` was pushed. Git attributes disable line-ending
+conversion for submission CSVs after a staged-byte check detected normalization;
+both staged outputs now exactly match their validated SHA-256 values. Internal
+agent history remains local. The earlier deadline is obsolete, as the user
+confirmed. Publication makes no additional classification API calls and does not
+submit an external form or produce unavailable blind-test datasets.

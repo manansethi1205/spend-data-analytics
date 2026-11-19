@@ -25,6 +25,8 @@ runtime remains unverified, and historical total API cost is unknown. No further
 API requests were made to finalize these files.
 
 The user has confirmed that the original deadline no longer applies. Finalization
-does not publish the repository or submit a form. Raw inputs, reference indexes,
+did not submit a form. The project was subsequently published at
+[manansethi1205/spend-data-analytics](https://github.com/manansethi1205/spend-data-analytics).
+Raw inputs, reference indexes,
 caches and detailed financial audits remain private. Future blind-test files
 require their actual data and, for C, a new configuration and tree.

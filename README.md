@@ -4,6 +4,8 @@ A configuration-driven tool for spend normalization, purchase
 de-duplication, supplier/item resolution and runtime taxonomy classification.
 The final target is unattended processing of A/B and blind-test A2/B2/C.
 
+Public repository: [manansethi1205/spend-data-analytics](https://github.com/manansethi1205/spend-data-analytics).
+
 ## Current status
 
 The original task deadline no longer applies, as confirmed by the user. Further
@@ -43,7 +45,8 @@ Final named outputs [manan__A.csv](./submission/manan__A.csv) and
 [manan__B.csv](./submission/manan__B.csv) independently validate all source records.
 They preserve the selected run outputs exactly. See [submission notes](./submission/README.md)
 for coverage and limitations. No further API calls were made for finalization.
-Public release/submission is not complete; [APPROACH.md](./APPROACH.md) records
+The audited project branch is published; no external submission form has been
+sent. [APPROACH.md](./APPROACH.md) records
 measured results and limitations.
 
 ## Run the label-free baseline

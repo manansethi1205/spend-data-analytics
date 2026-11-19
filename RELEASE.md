@@ -78,10 +78,13 @@ The full regression suite passes 549 tests. Both selected submission hashes are
 unchanged, and a heuristic working-tree candidate scan found no raw/private files
 or matching API-key strings. Git history has not been certified for publication.
 
-## Publication remains separate
+## Publication
 
-The intended public repository is `manansethi1205/spend-data-analytics`.
-Source/output auditing and initial project publication are being prepared.
+The public repository is [manansethi1205/spend-data-analytics](https://github.com/manansethi1205/spend-data-analytics).
+The audited project was published from a new root commit on `main`; no internal
+checkpoint history was pushed. Submission CSVs use `-text` Git attributes so
+their exact validated bytes and published checksums survive platform changes.
+No external task submission form has been sent.
 Publish only an audited project branch containing source, configs, synthetic
 examples, documentation and approved final CSVs. Internal agent checkpoint refs
 are not release history and must not be mirrored. Do not add source inputs,

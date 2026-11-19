@@ -143,7 +143,9 @@ accuracy/cost boundaries. Before submission, complete the paid-run measurements,
 resolve B's financial blocker, validate final named A/B outputs, and confirm the
 submission filename prefix. Audit Git staging/history and package contents for
 input data, private examples/caches, credentials and unapproved raw diagnostics.
-The public repository has not been published and no submission has been sent.
+The audited repository has since been published at
+[manansethi1205/spend-data-analytics](https://github.com/manansethi1205/spend-data-analytics).
+No external submission form has been sent.
 
 The supplied output specification permits final classified CSVs in the public
 repository, but never raw task inputs, private indexes or detailed audit extracts.

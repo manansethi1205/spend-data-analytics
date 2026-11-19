@@ -439,3 +439,10 @@ reserved groups for final evaluation. See [RETRIEVAL.md](./RETRIEVAL.md).
 - [x] Documented local regeneration versus unavailable historical private LLM/index decisions and removed stale current README claims.
 - [x] 549 tests pass; real A/B local financial reconciliation and unchanged final CSV hashes verified; candidate file scan found no raw/private files or matching API-key strings.
 - [ ] Actual new C/A2/B2 data and GitHub publication still require their inputs/remote information.
+
+## Publication completion
+
+- [x] User specified `manansethi1205/spend-data-analytics`; created that public GitHub repository with the existing authorized Git sign-in.
+- [x] Audited 87 project files, created a clean root commit and pushed only `main`; no internal checkpoint refs/history published.
+- [x] Added Git attributes preserving exact final submission CSV bytes across platforms; staged blob hashes match validated outputs.
+- [ ] External submission form and real A2/B2/C outputs remain outside this publication step.

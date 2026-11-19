@@ -1,0 +1,69 @@
+schema_version: 1
+company_id: B
+reporting_currency: USD
+financial_fallback:
+  missing_amount: zero
+  missing_fx: nearest_month
+matching:
+  repeat_sources: [invoices]
+csv:
+  encoding: utf-8-sig
+  delimiter: ','
+sources:
+  - name: invoices
+    path: company_B/invoice_lines.csv
+    amount_basis: as_provided
+    status_policy: unavailable
+    rate_convention: units_per_reporting
+    number_format: {decimal: '.', thousands: ''}
+    date_formats:
+      posting_date: ['%Y-%m-%d']
+      invoice_date: ['%Y-%m-%d']
+      due_date: ['%Y-%m-%d']
+      paid_date: ['%Y-%m-%d']
+    fields:
+      source_record_id: line_id
+      source_system: source_system
+      region: region
+      invoice_number: invoice_number
+      invoice_line: invoice_line
+      posting_date: posting_date
+      invoice_date: invoice_date
+      due_date: due_date
+      paid_date: paid_date
+      description: line_description
+      item_code: material_number
+      quantity: quantity
+      currency: currency
+      currency_rate: currency_rate
+      amount: line_amount
+      cost_centre: cost_centre
+      account_code: gl_account
+      account_description: gl_account_description
+      supplier_id: vendor_id
+      supplier_type: supplier_type
+      document_type: document_type
+      po_number: po_number
+      po_line: po_line
+      po_type: po_type
+      site_code: plant
+      company_code: company_code
+      payment_terms: payment_terms
+      transport_flag: transport_flag
+taxonomy:
+  path: company_B/taxonomy_B.csv
+  fields: {l1: category_l1, l2: category_l2, l3: category_l3}
+fx:
+  path: company_B/fx_rates_usd.csv
+  number_format: {decimal: '.', thousands: ''}
+  month_format: '%Y-%m'
+  fields: {currency: currency, month: month, units_per_usd: units_per_usd}
+labels:
+  path: company_B/seed_labels.csv
+  fields:
+    record_id: line_id
+    include: include
+    exclusion_reason: exclusion_reason
+    l1: category_l1
+    l2: category_l2
+    l3: category_l3

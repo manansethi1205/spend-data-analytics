@@ -1,0 +1,29 @@
+# Confidential inputs and local profiling artifacts
+/private/
+/data/
+**/erp_goods_receipts.csv
+**/invoice_tool_export.csv
+**/labels_A.csv
+**/taxonomy_A.csv
+**/invoice_lines.csv
+**/fx_rates_usd.csv
+**/seed_labels.csv
+**/taxonomy_B.csv
+
+# Credentials, environments and generated caches
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.cache/
+
+# Build, packaging and test artifacts
+/build/
+/dist/
+*.egg-info/
+.coverage
+/htmlcov/

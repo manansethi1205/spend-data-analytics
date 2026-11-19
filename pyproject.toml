@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling>=1.26,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cantill-spend"
+version = "0.1.0"
+description = "Configuration-driven spend data pipeline and taxonomy classifier"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "openai>=2,<3",
+    "pandas>=2.2,<3",
+    "PyYAML>=6,<7",
+]
+
+[project.scripts]
+cantill-spend = "cantill.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8,<10"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cantill"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/pyproject.toml", "/README.md", "/.python-version"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.uv]
+cache-dir = ".cache/uv"

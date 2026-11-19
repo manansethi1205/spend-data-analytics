@@ -1,0 +1,2 @@
+# Preserve the exact validated submission bytes and SHA256SUMS across platforms.
+submission/*.csv -text

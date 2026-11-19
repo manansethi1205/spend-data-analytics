@@ -1,0 +1,7 @@
+row_id,invoice_ref,line_no,date,gross_amount,vat,currency,units_per_usd,state,vendor,vendor_name,sku,text,quantity,unit
+DEMO001,DEMO-INV-1,1,2026-01-15,115,15%,USD,,approved,DEMO-V1,Synthetic Medical Supplier,DEMO-G1,Sterile nitrile gloves,10,BOX
+DEMO002,DEMO-INV-2,1,2026-01-16,230,15%,USD,,paid,DEMO-V2,Synthetic Laboratory Supplier,DEMO-P1,Laboratory pipette tips,20,BOX
+DEMO003,DEMO-INV-3,1,2026-01-17,57.5,15%,EUR,2,approved,DEMO-V3,Synthetic Cleaning Supplier,DEMO-S1,Facility cleaning service,1,EA
+DEMO004,DEMO-INV-4,1,2026-01-18,115,15%,USD,,cancelled,DEMO-V1,Synthetic Medical Supplier,DEMO-G1,Sterile nitrile gloves,10,BOX
+DEMO005,DEMO-INV-5,1,2026-01-19,115,15%,USD,,submitted,DEMO-V1,Synthetic Medical Supplier,DEMO-G1,Sterile nitrile gloves,10,BOX
+DEMO006,DEMO-INV-1,1,2026-01-15,115,15%,USD,,approved,DEMO-V1,Synthetic Medical Supplier,DEMO-G1,Sterile nitrile gloves,10,BOX

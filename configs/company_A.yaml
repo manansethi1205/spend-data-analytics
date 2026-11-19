@@ -1,0 +1,94 @@
+schema_version: 1
+company_id: A
+reporting_currency: ZAR
+matching:
+  repeat_sources: [tool]
+  cross_sources:
+    - preferred: erp
+      secondary: tool
+      po_pattern: '(?<!\d)(?P<po>\d{10})(?!\d)(?:/(?P<line>\d+)(?:\.0+)?)?'
+      amount_tolerance: '0.01'
+      quantity_tolerance: '0.000001'
+      supplier_similarity: 0.85
+      description_similarity: 0.80
+      no_po_supplier_similarity: 0.90
+      no_po_description_similarity: 0.92
+      weak_supplier_similarity: 0.65
+      max_no_po_date_gap_days: 45
+      max_candidates: 200
+      max_group_size: 50
+csv:
+  encoding: utf-8-sig
+  delimiter: ','
+sources:
+  - name: erp
+    path: company_A/erp_goods_receipts.csv
+    record_id_prefix: 'ERP:'
+    amount_basis: net
+    status_policy: unavailable
+    number_format: {decimal: '.', thousands: ''}
+    constants: {currency: ZAR}
+    date_formats:
+      posting_date: ['%Y-%m-%d']
+    fields:
+      source_record_id: line_id
+      source_system: source_system
+      spend_type: spend_type
+      po_number: po_number
+      po_line: po_item
+      receipt_document: receipt_document
+      receipt_line: receipt_item
+      posting_date: posting_date
+      item_code: material_number
+      description: material_short_text
+      service_text: service_short_text
+      material_type: material_type
+      quantity: quantity
+      unit: uom
+      po_unit: po_uom
+      amount: value_zar
+      unit_cost: unit_cost_zar
+      document_currency: document_currency
+      supplier_id: vendor_id
+      supplier_name: supplier_name
+      site_code: site_code
+      site_name: site_name
+      cost_centre: cost_centre
+      opex_capex: opex_capex
+      contract_status: contract_status
+      contract_number: contract_number
+  - name: tool
+    path: company_A/invoice_tool_export.csv
+    record_id_prefix: 'TOOL:'
+    amount_basis: gross
+    status_policy: require_approved
+    approved_statuses: [Approved, Paid]
+    cancelled_statuses: [Cancelled, Canceled]
+    vat_default: '0.15'
+    number_format: {decimal: '.', thousands: ','}
+    date_formats:
+      invoice_date: ['%Y-%m-%d', '%d/%m/%Y', '%d-%b-%y']
+    fields:
+      source_record_id: tool_record_id
+      invoice_number: invoice_number
+      invoice_date: invoice_date
+      supplier_name: supplier_name_as_captured
+      po_number: po_reference
+      description: line_text
+      quantity: quantity
+      amount: gross_amount
+      vat_rate: vat_rate
+      currency: currency
+      status: status
+taxonomy:
+  path: company_A/taxonomy_A.csv
+  fields: {l1: category_l1, l2: category_l2, l3: category_l3}
+labels:
+  path: company_A/labels_A.csv
+  fields:
+    record_id: record_id
+    l1: category_l1
+    l2: category_l2
+    l3: category_l3
+    supplier_key: supplier_key
+    item_key: item_key

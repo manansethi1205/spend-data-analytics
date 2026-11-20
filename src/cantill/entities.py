@@ -104,6 +104,7 @@ class Groups:
 class ResolvedCompany:
     matched: MatchedCompany
     records: pd.DataFrame
+    supplier_labels_used: bool = False
 
     def summary(self):
         included = self.records["include"] == 1
@@ -111,12 +112,17 @@ class ResolvedCompany:
                 "supplier_groups": self.records.loc[included, "supplier_key"].nunique(),
                 "item_groups": self.records.loc[included, "item_key"].nunique(),
                 "entity_flags": dict(Counter(f for flags in self.records["entity_flags"] for f in flags)),
-                "scope": "Label-free entity groups; names and codes are evidence, not guaranteed real-world identity"}
+                "supplier_labels_used": self.supplier_labels_used,
+                "scope": ("Company-specific supervised supplier aliases with label-free fallback" if self.supplier_labels_used
+                          else "Label-free entity groups; names and codes are evidence, not guaranteed real-world identity")}
 
 
-def resolve_entities(company: MatchedCompany) -> ResolvedCompany:
+def resolve_entities(company: MatchedCompany, *, supplier_crosswalk=None) -> ResolvedCompany:
     rows = company.records.to_dict("records")
     company_id = company.eligible.normalized.ingested.config.company_id
+    if supplier_crosswalk is not None and supplier_crosswalk.company_id != company_id:
+        from cantill.config import ConfigError
+        raise ConfigError("Supplier crosswalk company mismatch")
     suppliers = Groups()
     identities, flags, names = {}, {}, defaultdict(set)
     for row in rows:
@@ -142,6 +148,17 @@ def resolve_entities(company: MatchedCompany) -> ResolvedCompany:
 
     supplier_keys = {rid: opaque_key("supplier", company_id, suppliers.find(identity))
                      for rid, identity in identities.items()}
+    crosswalk_hits = set()
+    if supplier_crosswalk is not None:
+        ambiguous = set(supplier_crosswalk.ambiguous_names)
+        for row in rows:
+            name, rid = supplier_key(row["supplier_name"]), row["record_id"]
+            if name in supplier_crosswalk.names:
+                supplier_keys[rid] = supplier_crosswalk.names[name]
+                crosswalk_hits.add(rid)
+                flags[rid].append("SUPPLIER_CROSSWALK_MATCH")
+            elif name in ambiguous:
+                flags[rid].append("SUPPLIER_CROSSWALK_AMBIGUOUS")
     items = Groups()
     item_ids, aliases, code_signatures = {}, defaultdict(set), defaultdict(set)
     for row in rows:
@@ -193,7 +210,7 @@ def resolve_entities(company: MatchedCompany) -> ResolvedCompany:
         if not roots:
             continue
         candidates = {supplier_keys[root] for root in roots}
-        if len(candidates) == 1 and not row["supplier_id"].strip():
+        if len(candidates) == 1 and not row["supplier_id"].strip() and rid not in crosswalk_hits:
             supplier_keys[rid] = next(iter(candidates))
         candidates = {item_keys[root] for root in roots}
         if len(candidates) == 1 and not row["item_code"].strip():
@@ -208,4 +225,4 @@ def resolve_entities(company: MatchedCompany) -> ResolvedCompany:
     records["supplier_key"] = [supplier_keys[row["record_id"]] for row in rows]
     records["item_key"] = [item_keys[row["record_id"]] for row in rows]
     records["entity_flags"] = [tuple(flags[row["record_id"]]) for row in rows]
-    return ResolvedCompany(company, records)
+    return ResolvedCompany(company, records, supplier_crosswalk is not None)

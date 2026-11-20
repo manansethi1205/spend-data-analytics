@@ -8,7 +8,7 @@ import math
 import os
 from pathlib import Path
 import tempfile
-from threading import Event
+from threading import Event, Lock
 import time
 
 from openai import APIConnectionError, APIStatusError, OpenAI
@@ -80,14 +80,18 @@ class OpenAIClassifier:
         self.stats = Counter()
         self.stop = Event()
         self.owns_client = False
+        self.request_lock = Lock()
+        self.last_request = None
         self.client = client
         if client is None:
-            key = os.environ.get("OPENAI_API_KEY", "").strip()
+            variable = "OPENROUTER_API_KEY" if options.provider == "openrouter" else "OPENAI_API_KEY"
+            key = os.environ.get(variable, "").strip()
             if not key and options.mode == "openai":
-                raise ConfigError("OpenAI mode requires OPENAI_API_KEY in this process; use auto/local for the no-key fallback")
+                raise ConfigError(f"LLM mode requires {variable} in this process; use auto/local for the no-key fallback")
             if key:
-                # Ignore inherited alternate endpoints; credentials go only to OpenAI.
-                self.client = OpenAI(api_key=key, base_url="https://api.openai.com/v1",
+                # Fixed endpoints keep each provider's credentials on its own host.
+                endpoint = "https://openrouter.ai/api/v1" if options.provider == "openrouter" else "https://api.openai.com/v1"
+                self.client = OpenAI(api_key=key, base_url=endpoint,
                                      max_retries=0, timeout=options.timeout_seconds)
                 self.owns_client = True
 
@@ -96,6 +100,8 @@ class OpenAIClassifier:
             raise ConfigError("Labelled examples must use the separate label-assisted classifier")
         protocol = "cantill-labelled-openai-v1" if self.label_assisted else PROTOCOL
         payload = [protocol, self.company_id, self.options.model, self.instructions, self.schema, context]
+        if self.options.provider != "openai":
+            payload.append(["provider", self.options.provider, "free-private-routing-v1"])
         if self.label_assisted:
             payload.append(self.reference_fingerprint)
         return sha256(canonical(payload).encode()).hexdigest()
@@ -149,6 +155,17 @@ class OpenAIClassifier:
         for attempt in range(self.options.retries + 1):
             if self.stop.is_set():
                 return key, None, "OPENAI_CIRCUIT_OPEN", stats
+            extra = {}
+            if self.options.provider == "openrouter":
+                # Share pacing across this backend's workers, including retries.
+                with self.request_lock:
+                    if self.last_request is not None:
+                        time.sleep(max(0, 3.1 - (time.monotonic() - self.last_request)))
+                    self.last_request = time.monotonic()
+                if self.stop.is_set():
+                    return key, None, "OPENAI_CIRCUIT_OPEN", stats
+                extra = {"extra_body": {"provider": {"require_parameters": True,
+                         "data_collection": "deny", "max_price": {"prompt": 0, "completion": 0, "request": 0}}}}
             stats["requests"] += 1
             try:
                 response = self.client.responses.create(
@@ -156,6 +173,7 @@ class OpenAIClassifier:
                     input=canonical({"line": context}), store=False,
                     max_output_tokens=self.options.max_output_tokens,
                     text={"format": {"type": "json_schema", "name": "spend_category", "strict": True, "schema": schema}},
+                    **extra,
                 )
                 usage = response.usage
                 if usage is not None:
@@ -181,10 +199,10 @@ class OpenAIClassifier:
                 status = getattr(exc, "status_code", None)
                 stats["api_errors"] += 1
                 stats["connection_errors" if status is None else f"http_{status}"] += 1
-                if status in (401, 403):
+                if status in (401, 403) or (self.options.provider == "openrouter" and status in (402, 429)):
                     self.stop.set()
                 transient = status is None or status in (408, 409, 429) or status >= 500
-                if not transient or attempt == self.options.retries:
+                if self.stop.is_set() or not transient or attempt == self.options.retries:
                     # Never log exception text: it can contain payloads/credentials.
                     return key, None, "OPENAI_API_ERROR", stats
                 stats["retries"] += 1
@@ -219,7 +237,7 @@ class OpenAIClassifier:
                     self.stats.update(usage)
                     if result is not None:
                         self.write_cache(key, result)
-                    decisions[key] = (result, "openai" if result is not None else "local", flag)
+                    decisions[key] = (result, self.options.provider if result is not None else "local", flag)
         finally:
             if self.owns_client:
                 self.client.close()

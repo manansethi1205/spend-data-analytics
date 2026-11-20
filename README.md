@@ -11,12 +11,16 @@ Public repository: [manansethi1205/spend-data-analytics](https://github.com/mana
 The original task deadline no longer applies, as confirmed by the user. Further
 development and release checks continue without additional paid API calls.
 See [RELEASE.md](./RELEASE.md) for clean-checkout operation and new-company onboarding.
+For OpenRouter free-model classification, key storage and bounded trial commands,
+see [OPENROUTER.md](./OPENROUTER.md). Provider selection is explicit; existing
+OpenAI configuration remains the default.
 
 The pipeline implements ingestion, normalization, eligibility, purchase matching,
 entity resolution, runtime-tree classification and validated export. Local mode
 runs without API keys. Optional OpenAI classification supports strict category
 validation, private caches, bounded usage and visible local fallback. Known A/B
-companies can opt in to private labelled retrieval; C and labels-hidden A use the
+companies can opt in to private labelled retrieval and a company-specific supplier
+crosswalk; C and labels-hidden A omit both supervised artifacts and use the
 separate zero-label path. Inference does not read source label files.
 
 Live evaluation succeeded. On 100 group-balanced reserved records per arm, A
@@ -26,7 +30,12 @@ uncalibrated and A classification/entity recall remain material quality limits.
 Supplier resolution now also supports token Jaccard matching and reordered-name
 candidate lookup. Six A tuning settings retained 100% pair precision but did not
 improve the measured 10% recall; see [SUPPLIER_RESOLUTION.md](./SUPPLIER_RESOLUTION.md)
-for the golden-group limitation and B cross-ERP scope audit.
+for the label-free limitation and B cross-ERP scope audit. An optional private
+supplier crosswalk now learns A's golden identities. In a deterministic half-row
+label split it covers 99.94% of held-out name occurrences and raises supplier pair
+recall from 10.07% to 99.87%, at 100% measured pair precision. This measures name
+recurrence within A, not future A2 accuracy. Build/run commands and caveats are in
+[SUPPLIER_RESOLUTION.md](./SUPPLIER_RESOLUTION.md).
 
 The zero-label LLM path has since been revised to hierarchical child selection,
 with an optional TF-IDF shortlist, supplier-name context and a review/local-margin
@@ -44,7 +53,9 @@ B now explicitly opts into [financial fallback](./FINANCIAL_POLICY.md): blank
 amounts use flagged zero placeholders and absent invoice-month FX uses flagged
 nearest supplied months. The eight values are estimates, not recovered amounts
 or historically verified rates. A and new companies remain strict by default.
-The suite passes 574 tests, including supplier token/numeric/chain guards,
+The suite passes 594 tests, including OpenRouter credential/cache/routing/quota
+guards, supervised supplier crosswalk isolation,
+ambiguity/fallback checks, supplier token/numeric/chain guards,
 zero-label branching/budget/evaluation,
 fallback, financial-version provenance,
 safe API diagnostics and the published four-level new-company CLI example.

@@ -48,23 +48,30 @@ def main() -> int:
     run.add_argument("--data-dir", type=Path)
     run.add_argument("--output", type=Path, help="Write only if every included financial value is resolved")
     run.add_argument("--classifier", choices=("local", "openai", "auto"))
-    run.add_argument("--model", help="OpenAI model ID; overrides company classification config")
+    run.add_argument("--model", help="Provider model ID; overrides company classification config")
+    run.add_argument("--llm-provider", choices=("openai", "openrouter"))
+    run.add_argument("--llm-max-output-tokens", type=int)
     run.add_argument("--llm-max-requests", type=int, help="Maximum API attempts, including retries")
     run.add_argument("--llm-max-tokens", type=int, help="Conservative application token allowance, including retries")
     run.add_argument("--llm-workers", type=int)
     run.add_argument("--retrieval-index", type=Path, help="Opt in to a private company/tree-specific labelled index; omit for zero-label inference")
+    run.add_argument("--supplier-crosswalk", type=Path, help="Opt in to a private company-specific trained supplier crosswalk")
     run.add_argument("--zero-label-strategy", choices=("flat", "hierarchical", "shortlist"))
     run.add_argument("--shortlist-size", type=int)
     run.add_argument("--no-supplier-context", dest="include_supplier_context", action="store_false", default=None)
     run.add_argument("--confidence-mode", choices=("raw", "blended"))
     smoke = commands.add_parser("check-openai", help="Make one synthetic API classification request; no company data")
     smoke.add_argument("--model", default=ClassificationConfig().model)
+    router_smoke = commands.add_parser("check-openrouter", help="One synthetic request to an explicit free OpenRouter model")
+    router_smoke.add_argument("--model", default="openai/gpt-oss-120b:free")
     args = parser.parse_args()
-    if args.command == "check-openai":
+    if args.command in ("check-openai", "check-openrouter"):
         from cantill.llm import OpenAIClassifier
         try:
             backend = OpenAIClassifier((("Goods", "Fasteners"), ("Services", "Cleaning")),
                                        ClassificationConfig(mode="openai", model=args.model, retries=0,
+                                                            provider="openrouter" if args.command == "check-openrouter" else "openai",
+                                                            max_output_tokens=2048 if args.command == "check-openrouter" else 512,
                                                             max_requests=1, max_tokens=64000),
                                        company_id="synthetic-smoke")
             # A fresh synthetic context makes this a live credentials/model check.
@@ -82,13 +89,14 @@ def main() -> int:
             config = load_config(args.config, args.data_dir)
             overrides = {key: value for key, value in {
                 "mode": args.classifier, "model": args.model, "max_requests": args.llm_max_requests,
-                "max_tokens": args.llm_max_tokens, "workers": args.llm_workers}.items() if value is not None}
+                "max_tokens": args.llm_max_tokens, "workers": args.llm_workers,
+                "provider": args.llm_provider, "max_output_tokens": args.llm_max_output_tokens}.items() if value is not None}
             overrides.update({key: value for key, value in {
                 "zero_label_strategy": args.zero_label_strategy, "shortlist_size": args.shortlist_size,
                 "include_supplier_context": args.include_supplier_context,
                 "confidence_mode": args.confidence_mode}.items() if value is not None})
             result = run_company(config, classification=replace(config.classification, **overrides),
-                                 retrieval_index=args.retrieval_index)
+                                 retrieval_index=args.retrieval_index, supplier_crosswalk=args.supplier_crosswalk)
             if args.output:
                 write_output(result, args.output)
         except (ConfigError, OSError) as exc:

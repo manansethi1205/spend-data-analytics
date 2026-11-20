@@ -114,7 +114,8 @@ class ClassifiedCompany:
         return {**self.resolved.summary(), "classified_rows": int(included.sum()),
                 "classification_flags": dict(Counter(f for flags in self.records["classification_flags"] for f in flags)),
                 "classifier": "taxonomy_lexical_v1" if self.diagnostics is None else self.diagnostics["mode"],
-                "labels_used": bool(self.diagnostics and self.diagnostics.get("labels_used")),
+                "labels_used": self.resolved.supplier_labels_used or bool(self.diagnostics and self.diagnostics.get("labels_used")),
+                "classification_labels_used": bool(self.diagnostics and self.diagnostics.get("labels_used")),
                 "classification_methods": dict(Counter(self.records["classification_method"])),
                 "openai_usage": self.diagnostics,
                 "confidence_mean": float(self.records.loc[included, "confidence"].mean()) if included.any() else None,
@@ -166,7 +167,7 @@ def classify_company(company: ResolvedCompany, *, options=None, client=None, cac
                 flags[index] = ("OPENAI_NEEDS_REVIEW",) if result["needs_review"] else ()
             else:
                 flags[index] += (flag,)
-        diagnostics = {**(diagnostics or {}), "mode": options.mode, "model": options.model, **dict(backend.stats),
+        diagnostics = {**(diagnostics or {}), "mode": options.mode, "provider": options.provider, "model": options.model, **dict(backend.stats),
                        "max_requests": options.max_requests, "max_tokens": options.max_tokens,
                        "zero_label_strategy": options.zero_label_strategy if retrieval is None else None,
                        "confidence_semantics": "Zero-label: configured raw or review/local-margin heuristic blend; assisted: model self-report; none empirically calibrated"}

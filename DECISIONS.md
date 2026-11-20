@@ -961,3 +961,99 @@ mapping, so scoping remains unchanged. Item rules were not loosened on name-only
 analogies: their 99.99559% precision/48.07891% recall and selected CSV hashes are
 unchanged. The full suite passes 574 tests. No paid API calls were made. Details
 and reproduction are in [SUPPLIER_RESOLUTION.md](./SUPPLIER_RESOLUTION.md).
+
+## D37: Audit the large supplier group's vendor IDs and spend weight
+
+Checked the 122-name/20,891-row golden ERP group against raw vendor IDs. Only
+173 rows have an ID, across four accounts (167/3/2/1 rows); 20,718 rows lack one.
+Only four names ever have an account, leaving 118 names without a vendor-ID
+bridge. The resolver already uses scoped vendor IDs and propagates normalized
+name aliases. Separating coded rows from existing name-only fallback groups
+would remove those links: full-A pair recall falls from 9.99946% to 8.40494%
+at unchanged 100% precision in that diagnostic. Existing behavior is retained.
+
+The group's known ERP net spend is ZAR 1,178,429,361.39: 46.15% of ERP net spend
+and 36.70% of selected final A net spend. Its absolute spend is ZAR
+1,192,125,445.67: 44.73% of ERP absolute spend and 35.68% of final A absolute
+spend. It ranks first among the 70 golden groups on both ERP measures. Exact
+decimal calculations preserve credits; tool-only records are not assigned
+golden membership. The group is material on supplied A, but A2 prevalence and
+the scoring weight of supplier grouping cannot be inferred from these shares.
+
+Detailed diagnostics stay in ignored private storage. No production change,
+submission change, paid API call or B cross-ERP merge was made. See
+[SUPPLIER_RESOLUTION.md](./SUPPLIER_RESOLUTION.md) for the aggregate audit.
+
+## D38: Enable supervised company-specific supplier aliases
+
+The earlier decision against learning A's supplier identities was too restrictive.
+The provided golden keys are intended training data for matching and entity
+resolution. A2 is fresh A records, so a name crosswalk is a legitimate supervised
+feature even though those identities cannot transfer to C. This supersedes D36's
+rejection of such a map; the original label-free measurements remain unchanged.
+
+Added an explicit private training/evaluation command and optional runtime
+`--supplier-crosswalk`. Training joins only supplied label rows by record ID and
+maps normalized supplier names to opaque company/golden-group keys. Ambiguous
+names abstain; blank/short/unseen names use the original resolver. Direct hits
+are applied before item resolution and protected from duplicate inheritance.
+Runtime never reads labels and rejects company/protocol mismatches. B/C omit the
+artifact. Summaries distinguish supplier label use from classification label use.
+
+With sorted labelled IDs shuffled by seed 2026, 18,514 training rows yield 181
+unambiguous names. On 18,515 held-out rows, 18,504 name occurrences (99.94059%)
+are covered, all with correct golden identity. Pair recall improves from
+10.06720% to 99.87024%, at unchanged 100% precision (zero false merged pairs;
+72,750 missed). This is a row-disjoint recurring-name test with all unlabelled
+source rows available to the base resolver, not chronological/A2 generalization.
+Only after these predictions are frozen is the production artifact fitted on
+all 37,029 labels, yielding 191 names and zero ambiguous mappings.
+
+No claim of zero future precision risk: conflicting names, identity changes and
+noisy labels can invalidate an alias. Source names and derived maps remain in
+ignored private storage. Selected submission CSVs are not overwritten. No paid
+API calls are required or were made. Commands, metrics and limitations are in
+[SUPPLIER_RESOLUTION.md](./SUPPLIER_RESOLUTION.md).
+
+Verification: all 583 tests pass. A complete CLI run with the production map and
+local classification independently validates all 65,549 output rows, with
+inclusion/exclusion/spend identical to the selected submission. Labelled ERP
+rows fit the 70 golden groups exactly; that full-training check is not held-out
+accuracy. The verification CSV stays private and preserves selected LLM outputs.
+
+## D39: Optional free-only OpenRouter classification
+
+Added explicit `classification.provider` / `--llm-provider` selection while
+preserving OpenAI as the default. OpenRouter uses only `OPENROUTER_API_KEY` at
+its fixed API endpoint; it cannot inherit the OpenAI key or an alternate base
+URL. Its Responses API accepts the existing strict JSON schema. Provider/routing
+policy is part of new cache identities; existing OpenAI cache identities remain
+unchanged. Successful inference methods and diagnostics identify OpenRouter.
+
+This implementation requires a fixed `:free` model and routes with zero maximum
+prompt/completion/request pricing, required parameter support, disabled response
+storage and `data_collection: deny`. It never adds a paid model fallback.
+Attempts are paced at least 3.1 seconds apart within each backend, including
+retries; simultaneous processes still share account quotas. HTTP 402/429 opens
+the backend circuit without retries and remaining requests use local fallback.
+
+Current starting candidate is `openai/gpt-oss-120b:free`, listed by OpenRouter
+with structured output support. No model accuracy or eligible endpoint
+availability is claimed without a live check. Free-provider confidentiality
+terms matter: the currently listed NVIDIA free endpoint explicitly excludes
+confidential uploads. Restrictive provider filters may leave no usable free
+endpoint, in which case local fallback is retained. Account-level logging and
+training settings should also be disabled for company data.
+
+Published documentation/constants checked on 2026-11-20 list 20 requests/minute,
+50 daily free requests below the qualifying USD 10 credit purchase and 1,000
+daily after it; actual account allowance is inspectable via `/api/v1/key`.
+No purchase is needed for a small free trial. Those daily caps cannot support
+thousands of fresh contexts within the original runtime target. The historical
+OpenAI rehearsal pricing and frozen manifests are not reused for this provider.
+
+Added a synthetic `check-openrouter` command and a masked PowerShell key-storage
+guide in [OPENROUTER.md](./OPENROUTER.md). All 594 tests pass, including offline
+provider, secret isolation, cache, schema, pacing and quota-circuit checks.
+No live API call, key storage on the user's behalf, paid spend or selected
+submission change was performed.

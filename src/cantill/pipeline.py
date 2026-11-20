@@ -15,11 +15,15 @@ from cantill.normalize import normalize_company
 from cantill.output import OUTPUT_COLUMNS, validate_output
 
 
-def run_company(config, *, classification=None, retrieval_index=None):
+def run_company(config, *, classification=None, retrieval_index=None, supplier_crosswalk=None):
     # Labels are never loaded, including when a label path exists in the config.
     normalized = normalize_company(ingest_company(config))
     matched = count_purchases(assess_eligibility(normalized))
-    resolved = resolve_entities(matched)
+    crosswalk = None
+    if supplier_crosswalk is not None:
+        from cantill.supplier_crosswalk import SupplierCrosswalk
+        crosswalk = SupplierCrosswalk.load(supplier_crosswalk, company_id=config.company_id)
+    resolved = resolve_entities(matched, supplier_crosswalk=crosswalk)
     retrieval = None
     if retrieval_index is not None:
         from cantill.retrieval import RetrievalIndex

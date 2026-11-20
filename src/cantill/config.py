@@ -105,8 +105,13 @@ class ClassificationConfig:
     shortlist_size: int = 8
     include_supplier_context: bool = True
     confidence_mode: str = "blended"
+    provider: str = "openai"
 
     def __post_init__(self):
+        if self.provider not in ("openai", "openrouter"):
+            raise ConfigError("classification.provider must be openai or openrouter")
+        if self.provider == "openrouter" and (not isinstance(self.model, str) or not self.model.endswith(":free")):
+            raise ConfigError("OpenRouter currently requires an explicit :free model ID")
         if self.mode not in ("local", "openai", "auto"):
             raise ConfigError("classification.mode must be local, openai or auto")
         if self.zero_label_strategy not in ("flat", "hierarchical", "shortlist"):

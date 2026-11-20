@@ -1,0 +1,53 @@
+schema_version: 1
+company_id: C
+reporting_currency: USD
+csv:
+  encoding: utf-8-sig
+  delimiter: ','
+matching:
+  repeat_sources: [invoices]
+eligibility:
+  additional_rules:
+    - name: c_revenue_control_accounts
+      fields: [account_description]
+      pattern: '\brevenue\b|^ar\s+jib\s+deposits\s+clearing$'
+    - name: c_royalty_and_tax_accounts
+      fields: [account_description]
+      pattern: '\broyalt(?:y|ies)\s+payable\b|^accrued\s+.*\btaxes\b|^loe\s*-\s*impact\s+fee\s*&\s*other\s+tax$'
+    - name: c_joint_interest_partner_billing
+      fields: [description, service_text]
+      pattern: '^(?:\d{4}\s+[a-z]+\s+)?jib\s+voucher\b|\bjoint\s+interest\s+billings?\b'
+sources:
+  - name: invoices
+    path: company_C/invoice_lines.csv
+    amount_basis: as_provided
+    number_format: {decimal: '.', thousands: ''}
+    constants:
+      currency: USD
+    status_policy: require_approved
+    approved_statuses: [Approved, Paid]
+    cancelled_statuses: [Cancelled, Canceled]
+    date_formats:
+      invoice_date: ['%m/%d/%Y']
+    fields:
+      source_record_id: line_id
+      invoice_number: invoice_number
+      invoice_line: invoice_line
+      invoice_date: invoice_date
+      status: status
+      quantity: quantity
+      unit: uom
+      unit_cost: rate_usd
+      # Count each line's supplied USD amount, never the repeated invoice total.
+      amount: line_amount_usd
+      supplier_name: supplier_name
+      description: line_description
+      service_text: invoice_description
+      # Preserve supplementary product/service text as classification context.
+      material_type: product_service_description
+      account_description: gl_account_description
+      company_code: buyer_entity
+      # Product/service codes include generic values and are not global item IDs.
+taxonomy:
+  path: company_C/category_tree_C.csv
+  fields: {l1: level_1, l2: level_2, l3: level_3, l4: level_4}
